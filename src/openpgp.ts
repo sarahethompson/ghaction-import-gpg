@@ -28,12 +28,19 @@ export const readPrivateKey = async (key: string): Promise<PrivateKey> => {
     return addressparser(primaryUser.user.userId.userid)[0];
   });
 
-  return {
-    fingerprint: privateKey.getFingerprint().toUpperCase(),
-    keyID: await privateKey.getEncryptionKey().then(encKey => {
+  // @ts-ignore
+  let keyID: string = undefined;
+  try {
+    keyID = await privateKey.getEncryptionKey().then(encKey => {
       // @ts-ignore
       return encKey?.getKeyId().toHex().toUpperCase();
-    }),
+    })
+  } catch (err) {
+    if (!err.message.includes('Could not find valid encryption key packet in key')) throw err;
+  }
+  return {
+    fingerprint: privateKey.getFingerprint().toUpperCase(),
+    keyID,
     name: address.name,
     email: address.address,
     creationTime: privateKey.getCreationTime()
